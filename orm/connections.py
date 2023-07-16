@@ -5,7 +5,7 @@ from typing import Any
 
 import databases
 
-from orm.queries import Query
+from orm.queries.select import Query
 
 
 def construct_dsn(

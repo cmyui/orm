@@ -5,13 +5,30 @@
 # sqlite?
 # mssql??
 import asyncio
+import hashlib
 
+import asyncpg.exceptions
+
+from orm import state
 from orm.columns import DateTime, Float, Integer, String
 from orm.connections import Connection, construct_dsn
 from orm.functions import SqlFunction
-from orm.queries import Order, select
+from orm.queries import Order
+from orm.queries.insert import insert
+from orm.queries.select import select
 from orm.sql_generation import generate_up_migration_code
 from orm.tables import Table, table_instance
+
+
+@table_instance
+class Migrations(Table):
+    __tablename__ = "migrations"
+    __primary_key__ = "migration_id"
+
+    migration_id = Integer("migrations", "migration_id", primary_key=True)
+    migration_name = String("migrations", "migration_name")
+    migration_hash = String("migrations", "migration_hash")
+    created_at = DateTime("migrations", "created_at", default=SqlFunction.NOW)
 
 
 @table_instance
@@ -19,7 +36,6 @@ class Accounts(Table):
     __tablename__ = "accounts"
     __primary_key__ = "account_id"
 
-    # TODO: should we metaclass these to make it more DRY for our users?
     account_id = Integer("accounts", "account_id", primary_key=True)
     account_type = String("accounts", "account_type")
     created_at = DateTime("accounts", "created_at", default=SqlFunction.NOW)
@@ -31,7 +47,6 @@ class Payments(Table):
     __tablename__ = "payments"
     __primary_key__ = "payment_id"
 
-    # TODO: should we metaclass these to make it more DRY for our users?
     payment_id = Integer("payments", "payment_id", primary_key=True)
     account_id = Integer("payments", "account_id")
     amount = Float("payments", "amount")
@@ -50,14 +65,51 @@ async def async_main() -> int:
         driver="asyncpg",
     )
 
-    # TODO: keep track of what migrations have already been run
-    #       then we can enable this for our users (creation is working)
-    # create_accounts = generate_up_migration_code(Accounts)
-    # create_payments = generate_up_migration_code(Payments)
-    # async with Connection(dsn) as connection:
-    #     await connection.execute(create_accounts)
-    #     await connection.execute(create_payments)
+    # run database migrations
+    async with Connection(dsn) as connection:
+        for table_name, table in state.TABLE_INSTANCES.items():
+            migration_sql = generate_up_migration_code(table)
+            migration_hash = hashlib.sha256(migration_sql.encode()).hexdigest()
 
+            # check if migration has already been run
+            query = (
+                select([Migrations])
+                .from_table(Migrations)
+                .where(
+                    [
+                        Migrations.migration_name == table_name,
+                        Migrations.migration_hash == migration_hash,
+                    ]
+                )
+            )
+            try:
+                rec = await connection.fetch_one(query)
+            except asyncpg.exceptions.UndefinedTableError:
+                # if we're about to create the migrations table, let it pass
+                # otherwise, raise the error because we won't be able to track
+                # the creation of the table
+                assert table_name == "migrations", "migrations table doesn't exist"
+                rec = None
+
+            if rec:
+                continue
+
+            await connection.execute(migration_sql)
+
+            # insert migration record
+            query = (
+                insert()
+                .into_table(Migrations)
+                .values(
+                    [
+                        (Migrations.migration_name, table_name),
+                        (Migrations.migration_hash, migration_hash),
+                    ],
+                )
+            )
+            await connection.execute(query)
+
+    # run the application
     async with Connection(dsn) as connection:
         # SELECT a.account_id, a.account_type, p.*
         # FROM accounts AS a
