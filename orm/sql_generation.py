@@ -36,7 +36,9 @@ def get_sql_type_from_py_type(py_type: Any) -> str:
 
 
 def generate_up_migration_code(table: Table) -> str:
-    """
+    """\
+    A function to generate the up migration code for a table.
+
     CREATE TABLE accounts (
         account_id SERIAL PRIMARY KEY,
         account_type TEXT NOT NULL,

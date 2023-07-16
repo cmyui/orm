@@ -6,6 +6,8 @@ from orm import state
 from orm.columns import Column
 
 
+# TODO: can we automate columns getting table & column names using this?
+# currently it causes quite a lot of duplication
 class TableMeta(type):
     def __new__(
         cls: type[TableMeta],

@@ -1,44 +1,12 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from enum import Enum
 from typing import TYPE_CHECKING
 
+from orm.queries import Join, JoinType, Order, Query
 from orm.tables import Table
 
 if TYPE_CHECKING:
     from orm.columns import Column, Expression
-
-
-# TODO: should this be an ABC?
-class Query(ABC):
-    @abstractmethod
-    def convert_to_sql(self) -> str:
-        raise NotImplementedError
-
-
-class JoinType(Enum):
-    OUTER = "OUTER"
-    INNER = "INNER"
-    LEFT = "LEFT"
-    RIGHT = "RIGHT"
-
-
-class Join:
-    def __init__(
-        self,
-        type: JoinType,
-        table: Table,
-        conditions: list[Expression],
-    ) -> None:
-        self._table = table
-        self._conditions = conditions
-        self._type = type
-
-
-class Order(Enum):
-    ASC = "ASC"
-    DESC = "DESC"
 
 
 class Select(Query):
@@ -126,6 +94,6 @@ class Select(Query):
         return query
 
 
-# NOTE: allow table references here for `t.*` behaviour
+# NOTE: we allow table references here for `t.*` behaviour
 def select(expressions: list[Expression | Table]) -> Select:
     return Select(expressions=expressions)
