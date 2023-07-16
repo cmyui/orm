@@ -50,11 +50,13 @@ async def async_main() -> int:
         driver="asyncpg",
     )
 
-    create_accounts = generate_up_migration_code(Accounts)
-    create_payments = generate_up_migration_code(Payments)
-
-    print(create_accounts)
-    print(create_payments)
+    # TODO: keep track of what migrations have already been run
+    #       then we can enable this for our users (creation is working)
+    # create_accounts = generate_up_migration_code(Accounts)
+    # create_payments = generate_up_migration_code(Payments)
+    # async with Connection(dsn) as connection:
+    #     await connection.execute(create_accounts)
+    #     await connection.execute(create_payments)
 
     async with Connection(dsn) as connection:
         # SELECT a.account_id, a.account_type, p.*
@@ -72,9 +74,14 @@ async def async_main() -> int:
             .where([Accounts.account_id == 1])
             .order_by(Accounts.account_id, order=Order.DESC)
             .limit(50)
-            .offset(50)
+            .offset(0)
         )
-        await connection.fetch_one(query)
+
+        recs = await connection.fetch_all(query)
+
+        print("Fetched results:")
+        for result in recs:
+            print(result)
 
     return 0
 

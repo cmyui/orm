@@ -15,16 +15,19 @@ class TableMeta(type):
         classdict: dict[str, Any],
     ) -> TableMeta:
         columns: list[Column] = []
+        classdict["__primary_key__"] = None
         for v in classdict.values():
             if isinstance(v, Column):
                 columns.append(v)
+                if v._primary_key:
+                    classdict["__primary_key__"] = v._column_name
         classdict["__columns__"] = tuple(columns)
         return super().__new__(cls, name, bases, classdict)
 
 
 class Table(metaclass=TableMeta):
     __tablename__: str
-    __primary_key__: str
+    __primary_key__: str | None
     __columns__: tuple[Column, ...]
 
 

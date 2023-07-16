@@ -74,7 +74,12 @@ def generate_up_migration_code(table: Table) -> str:
         if primary_key:
             column_type = "SERIAL"
 
-        query += f"    {column._column_name} {column_type} {nullable} {primary_key} {default},\n"
+        query += f"    {column._column_name} {column_type} {nullable}"
+        if primary_key:
+            query += f" {primary_key}"
+        if default:
+            query += f" {default}"
+        query += ",\n"
 
     query = query[:-2]  # no trailing comma
 

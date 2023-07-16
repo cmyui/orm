@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import databases
 
-if TYPE_CHECKING:
-    from orm.queries import Query
+from orm.queries import Query
 
 
 def construct_dsn(
@@ -45,24 +44,29 @@ class Connection:
     ) -> None:
         await self._connection.disconnect()
 
-    async def fetch_one(self, query: Query) -> dict[str, Any] | None:
-        sql = build_query(query)
-        rec = await self._connection.fetch_one(sql)
+    async def fetch_one(self, query: Query | str) -> dict[str, Any] | None:
+        if isinstance(query, Query):
+            query = build_query(query)
+        rec = await self._connection.fetch_one(query)
 
         # TODO: return an object of the result
         return dict(rec._mapping) if rec is not None else None
 
-    async def fetch_all(self, query: Query) -> list[dict[str, Any]]:
-        sql = build_query(query)
-        recs = await self._connection.fetch_all(sql)
+    async def fetch_all(self, query: Query | str) -> list[dict[str, Any]]:
+        if isinstance(query, Query):
+            query = build_query(query)
+        print("fetch all", query)
+        recs = await self._connection.fetch_all(query)
         return [dict(rec._mapping) for rec in recs]
 
-    async def execute(self, query: Query) -> None:
-        sql = build_query(query)
-        await self._connection.execute(sql)
+    async def execute(self, query: Query | str) -> None:
+        if isinstance(query, Query):
+            query = build_query(query)
+        await self._connection.execute(query)
         return None
 
-    async def execute_many(self, query: Query, values: list[Any]) -> None:
-        sql = build_query(query)
-        await self._connection.execute_many(sql, values)
+    async def execute_many(self, query: Query | str, values: list[Any]) -> None:
+        if isinstance(query, Query):
+            query = build_query(query)
+        await self._connection.execute_many(query, values)
         return None
