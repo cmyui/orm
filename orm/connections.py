@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from types import TracebackType
 from typing import Any
 
@@ -34,7 +33,6 @@ class Connection:
         self._connection = databases.Database(dsn)
 
     async def __aenter__(self) -> Connection:
-        logging.debug("connecting to database")
         await self._connection.connect()
         return self
 
@@ -44,14 +42,12 @@ class Connection:
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        logging.debug("disconnecting from database")
         await self._connection.disconnect()
 
     async def fetch_one(self, query: Query | str) -> dict[str, Any] | None:
         if isinstance(query, Query):
             query = build_query(query)
 
-        logging.debug("fetch one: %s", query)
         rec = await self._connection.fetch_one(query)
 
         # TODO: return an object of the result
@@ -61,7 +57,6 @@ class Connection:
         if isinstance(query, Query):
             query = build_query(query)
 
-        logging.debug("fetch all: %s", query)
         recs = await self._connection.fetch_all(query)
         return [dict(rec._mapping) for rec in recs]
 
@@ -69,7 +64,6 @@ class Connection:
         if isinstance(query, Query):
             query = build_query(query)
 
-        logging.debug("execute: %s", query)
         await self._connection.execute(query)
         return None
 
@@ -77,6 +71,5 @@ class Connection:
         if isinstance(query, Query):
             query = build_query(query)
 
-        logging.debug("execute many: %s", query)
         await self._connection.execute_many(query, values)
         return None
