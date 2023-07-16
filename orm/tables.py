@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Any, TypeVar
 
+from orm import state
 from orm.columns import Column
-
-T = TypeVar("T")
 
 
 class TableMeta(type):
@@ -31,7 +30,12 @@ class Table(metaclass=TableMeta):
     __columns__: tuple[Column, ...]
 
 
+T = TypeVar("T", bound="Table")
+
+
 def table_instance(cls: type[T]) -> T:
     # XXX:HACK super based way to make them all instances
     # basically we get `Table` instead of `type[Table]`
-    return cls()
+    obj = cls()
+    state.TABLE_INSTANCES[cls.__tablename__] = obj
+    return obj
