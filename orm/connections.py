@@ -51,3 +51,18 @@ class Connection:
 
         # TODO: return an object of the result
         return dict(rec._mapping) if rec is not None else None
+
+    async def fetch_all(self, query: Query) -> list[dict[str, Any]]:
+        sql = build_query(query)
+        recs = await self._connection.fetch_all(sql)
+        return [dict(rec._mapping) for rec in recs]
+
+    async def execute(self, query: Query) -> None:
+        sql = build_query(query)
+        await self._connection.execute(sql)
+        return None
+
+    async def execute_many(self, query: Query, values: list[Any]) -> None:
+        sql = build_query(query)
+        await self._connection.execute_many(sql, values)
+        return None

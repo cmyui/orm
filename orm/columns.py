@@ -1,21 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from datetime import datetime
 from enum import Enum, auto
-from typing import Any, Literal, Optional, Self, TypeAlias
+from typing import Any, Optional, Self, TypeAlias
 
 from orm._typing import UNSET, Unset
-
-
-class Constraint:
-    def __init__(
-        self,
-        columns: Sequence[str],
-        constraint_type: Literal["unique"],  # TODO: others
-    ) -> None:
-        self.columns = columns
-        self.constraint_type = constraint_type
+from orm.functions import SqlFunction
 
 
 class OperationType(Enum):
@@ -144,6 +134,8 @@ class SqlLiteral:  # e.g. "1"
             return str(self._value)
         elif isinstance(self._value, datetime):
             return f"'{self._value.isoformat()}'"
+        elif self._value is None:
+            return "NULL"
         else:
             raise NotImplementedError(
                 f"No implementation for this type: {type(self._value)}"
@@ -157,7 +149,7 @@ class Column:  # e.g. "a.account_id", "accounts.account_id"
         column_name: str,
         primary_key: bool = False,
         nullable: bool = False,
-        default: Optional[PrimitiveSharedPyTypes] | Unset = UNSET,
+        default: Optional[PrimitiveSharedPyTypes] | SqlFunction | Unset = UNSET,
     ) -> None:
         self._table_name = table_name
         self._column_name = column_name
