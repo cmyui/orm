@@ -6,6 +6,8 @@
 # mssql??
 import asyncio
 import hashlib
+import logging
+import os
 
 import asyncpg.exceptions
 
@@ -18,6 +20,8 @@ from orm.queries.insert import insert
 from orm.queries.select import select
 from orm.sql_generation import generate_up_migration_code
 from orm.tables import Table, table_instance
+
+logging.basicConfig(level=os.getenv("LOG_LEVEL", logging.INFO))
 
 
 @table_instance
