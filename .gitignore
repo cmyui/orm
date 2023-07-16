@@ -1,0 +1,13 @@
+# python bytecode cache
+__pycache__/
+
+# ide preferences
+.vscode/
+
+# secrets
+.env*
+
+# testing
+.coverage
+.coverage.*
+.pytest_cache/
