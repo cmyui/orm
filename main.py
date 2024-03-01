@@ -58,18 +58,7 @@ class Payments(Table):
     updated_at = DateTime("payments", "updated_at", nullable=True, default=None)
 
 
-async def async_main() -> int:
-    dsn = construct_dsn(
-        dialect="postgresql",
-        user="postgres",
-        password="lol123",
-        host="localhost",
-        port=5433,
-        database="orm_testing",
-        driver="asyncpg",
-    )
-
-    # run database migrations
+async def run_database_migrations(dsn: str) -> None:
     async with Connection(dsn) as connection:
         for table_name, table in state.TABLE_INSTANCES.items():
             migration_sql = generate_up_migration_code(table)
@@ -112,6 +101,21 @@ async def async_main() -> int:
                 )
             )
             await connection.execute(query)
+
+
+async def async_main() -> int:
+    dsn = construct_dsn(
+        dialect="postgresql",
+        user="postgres",
+        password="lol123",
+        host="localhost",
+        port=5433,
+        database="orm_testing",
+        driver="asyncpg",
+    )
+
+    # run database migrations
+    await run_database_migrations(dsn)
 
     # run the application
     async with Connection(dsn) as connection:
